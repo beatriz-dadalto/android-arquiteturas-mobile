@@ -13,6 +13,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import co.tiagoaguiar.evernotekt.model.Note
 import co.tiagoaguiar.evernotekt.model.RemoteDataSource
 import com.google.android.material.navigation.NavigationView
+import io.reactivex.Observable
+import io.reactivex.Observer
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_home.*
 import kotlinx.android.synthetic.main.app_bar_home.*
 import kotlinx.android.synthetic.main.content_home.*
@@ -58,6 +63,49 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onStart() {
         super.onStart()
         dataSource.listNotes(callback)
+
+        val subscriber = createSubscriber()
+
+        Observable.merge(createYoutubeChannel(), createSpotify())
+            .subscribeOn(Schedulers.io()) // Thread Parallel
+            .observeOn(AndroidSchedulers.mainThread()) // main Thread
+            .subscribe(subscriber)
+    }
+
+    fun createYoutubeChannel(): Observable<String> {
+        return Observable.create { emitter ->
+            println("Current Thread: ${Thread.currentThread().name}")
+            emitter.onNext("Bem vindo ao canal do Youtube!")
+            emitter.onComplete()
+        }
+    }
+
+    fun createSpotify(): Observable<String> {
+        return Observable.create { emitter ->
+            emitter.onNext("Tocando a música X no Spotify.")
+            emitter.onComplete()
+        }
+    }
+
+    fun createSubscriber(): Observer<String> {
+        return object : Observer<String> {
+            override fun onSubscribe(d: Disposable) {
+                println("onSubscribe: Inscrição feita.")
+            }
+
+            override fun onError(e: Throwable) {
+                println("onError: Novo valor error ${e.message}")
+            }
+
+            override fun onComplete() {
+                println("Current Thread: ${Thread.currentThread().name}")
+                println("onComplete: Novo valor emitido")
+            }
+
+            override fun onNext(t: String) {
+                println("onNext: Novo valor é $t")
+            }
+        }
     }
 
     private val callback: Callback<List<Note>>
