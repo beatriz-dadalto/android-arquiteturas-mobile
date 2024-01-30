@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    tools:showIn="@layout/content_home"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/note_date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        tools:text="20/02/2001" />
+
+    <TextView
+        android:id="@+id/note_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:textColor="@android:color/black"
+        android:textStyle="bold"
+        tools:text="aws s3 sync command line" />
+
+    <TextView
+        android:id="@+id/note_desc"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:maxLines="3"
+        android:ellipsize="marquee"
+        tools:text="http://google.com http://youtube.com Estruturas de classes http://google.com http://youtube.com Estruturas de classes http://google.com http://youtube.com Estruturas de classes" />
+
+</LinearLayout>
