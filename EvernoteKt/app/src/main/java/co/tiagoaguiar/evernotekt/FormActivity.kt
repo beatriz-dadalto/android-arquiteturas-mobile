@@ -12,22 +12,24 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import co.tiagoaguiar.evernotekt.model.Note
 import co.tiagoaguiar.evernotekt.model.RemoteDataSource
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.observers.DisposableObserver
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_form.*
 import kotlinx.android.synthetic.main.content_form.*
 import retrofit2.Callback
 import retrofit2.Response
 
-/**
- *
- * Setembro, 24 2019
- * @author suporte@moonjava.com.br (Tiago Aguiar).
- */
 class FormActivity : AppCompatActivity(), TextWatcher {
 
     private var toSave: Boolean = false
     private var noteId: Int? = null
 
     private val dataSource = RemoteDataSource()
+
+    // compositeDisposable -> todos observers que podem ser descartados serão limpados então os os observables não emitirão mais msg
+    private val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,9 +47,62 @@ class FormActivity : AppCompatActivity(), TextWatcher {
         }
     }
 
-    private fun getNote(noteId: Int) {
-        dataSource.getNote(noteId, callback)
+    override fun onStop() {
+        super.onStop()
+        // compositeDisposable -> todos observers que podem ser descartados serão limpados então os os observables não emitirão mais msg
+        compositeDisposable.clear()
     }
+
+    private fun getNote(noteId: Int) {
+        val disposable = dataSource.getNote(noteId)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeWith(getNoteObserver)
+        // retirar o observer do observable
+        compositeDisposable.add(disposable)
+    }
+
+    private fun createNote(note: Note) {
+        val disposable = dataSource.createNote(note)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeWith(createNoteObserver)
+        // retirar o observer do observable
+        compositeDisposable.add(disposable)
+    }
+
+    private val getNoteObserver: DisposableObserver<Note>
+        get() = object : DisposableObserver<Note>() {
+            override fun onNext(note: Note) {
+                displayNote(note)
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+                displayError("Erro ao carregar notas.")
+            }
+
+            override fun onComplete() {
+                println("Completed!")
+            }
+
+        }
+
+    private val createNoteObserver: DisposableObserver<Note>
+        get() = object : DisposableObserver<Note>() {
+            override fun onNext(note: Note) {
+                finish()
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+                displayError("Erro ao carregar notas")
+            }
+
+            override fun onComplete() {
+                println("Completed!")
+            }
+        }
 
     private fun setupViews() {
         setSupportActionBar(toolbar)
@@ -71,46 +126,6 @@ class FormActivity : AppCompatActivity(), TextWatcher {
             it.setDisplayHomeAsUpEnabled(true)
         }
     }
-
-
-    private val callback: Callback<Note>
-        get() = object : Callback<Note> {
-
-            override fun onFailure(call: retrofit2.Call<Note>, t: Throwable) {
-                t.printStackTrace()
-                displayError("Erro ao carregar nota")
-            }
-
-            override fun onResponse(
-                call: retrofit2.Call<Note>,
-                response: Response<Note>
-            ) {
-                if (response.isSuccessful) {
-                    val note = response.body()
-                    displayNote(note)
-                }
-            }
-
-        }
-
-    private val callbackCreate: Callback<Note>
-        get() = object : Callback<Note> {
-
-            override fun onFailure(call: retrofit2.Call<Note>, t: Throwable) {
-                t.printStackTrace()
-                displayError("Erro ao criar nota")
-            }
-
-            override fun onResponse(
-                call: retrofit2.Call<Note>,
-                response: Response<Note>
-            ) {
-                if (response.isSuccessful) {
-                    finish()
-                }
-            }
-
-        }
 
     fun displayError(message: String) {
         showToast(message)
@@ -138,7 +153,7 @@ class FormActivity : AppCompatActivity(), TextWatcher {
                 note.title = note_title.text.toString()
                 note.body = note_editor.text.toString()
 
-                dataSource.createNote(note, callbackCreate)
+                createNote(note)
 
                 true
             } else {

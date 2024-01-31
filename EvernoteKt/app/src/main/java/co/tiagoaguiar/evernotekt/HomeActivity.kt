@@ -16,7 +16,9 @@ import com.google.android.material.navigation.NavigationView
 import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
+import io.reactivex.observers.DisposableObserver
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_home.*
 import kotlinx.android.synthetic.main.app_bar_home.*
@@ -28,6 +30,9 @@ import retrofit2.Response
 class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private val dataSource = RemoteDataSource()
+
+    // compositeDisposable -> todos observers que podem ser descartados serão limpados então os os observables não emitirão mais msg
+    private val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,72 +67,39 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     override fun onStart() {
         super.onStart()
-        dataSource.listNotes(callback)
+        getAllNotes()
+    }
 
-        val subscriber = createSubscriber()
+    override fun onStop() {
+        super.onStop()
+        // todos observers que podem ser descartados serão limpados então os os observables não emitirão mais msg
+        compositeDisposable.clear()
+    }
 
-        Observable.merge(createYoutubeChannel(), createSpotify())
+    // requisição no RETROFIT
+    private fun getAllNotes() {
+        val disposable = dataSource.listNotes()
             .subscribeOn(Schedulers.io()) // Thread Parallel
             .observeOn(AndroidSchedulers.mainThread()) // main Thread
-            .subscribe(subscriber)
+            .subscribeWith(notesObserver)
+        // retirar o observer do observable
+        compositeDisposable.add(disposable)
     }
 
-    fun createYoutubeChannel(): Observable<String> {
-        return Observable.create { emitter ->
-            println("Current Thread: ${Thread.currentThread().name}")
-            emitter.onNext("Bem vindo ao canal do Youtube!")
-            emitter.onComplete()
-        }
-    }
-
-    fun createSpotify(): Observable<String> {
-        return Observable.create { emitter ->
-            emitter.onNext("Tocando a música X no Spotify.")
-            emitter.onComplete()
-        }
-    }
-
-    fun createSubscriber(): Observer<String> {
-        return object : Observer<String> {
-            override fun onSubscribe(d: Disposable) {
-                println("onSubscribe: Inscrição feita.")
+    private val notesObserver: DisposableObserver<List<Note>>
+        get() = object : DisposableObserver<List<Note>>() {
+            override fun onNext(notes: List<Note>) {
+                displayNotes(notes)
             }
 
             override fun onError(e: Throwable) {
-                println("onError: Novo valor error ${e.message}")
+                e.printStackTrace()
+                displayError("Erro ao carregar notas.")
             }
 
             override fun onComplete() {
-                println("Current Thread: ${Thread.currentThread().name}")
-                println("onComplete: Novo valor emitido")
+                println("Completed!")
             }
-
-            override fun onNext(t: String) {
-                println("onNext: Novo valor é $t")
-            }
-        }
-    }
-
-    private val callback: Callback<List<Note>>
-        get() = object : Callback<List<Note>> {
-
-            override fun onFailure(call: retrofit2.Call<List<Note>>, t: Throwable) {
-                t.printStackTrace()
-                displayError("Erro ao carregar notas")
-            }
-
-            override fun onResponse(
-                call: retrofit2.Call<List<Note>>,
-                response: Response<List<Note>>
-            ) {
-                if (response.isSuccessful) {
-                    val notes = response.body()
-                    notes?.let {
-                        displayNotes(it)
-                    }
-                }
-            }
-
         }
 
     fun displayError(message: String) {

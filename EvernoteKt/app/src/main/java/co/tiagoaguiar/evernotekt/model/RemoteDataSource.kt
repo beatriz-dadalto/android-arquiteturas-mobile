@@ -1,31 +1,33 @@
 package co.tiagoaguiar.evernotekt.model
 
 import co.tiagoaguiar.evernotekt.network.RetrofitClient
+import io.reactivex.Observable
+import io.reactivex.Scheduler
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import retrofit2.Callback
 
-/**
- *
- * Setembro, 24 2019
- * @author suporte@moonjava.com.br (Tiago Aguiar).
- */
 class RemoteDataSource {
 
-    fun listNotes(callback: Callback<List<Note>>) {
-        RetrofitClient.evernoteApi
+    fun listNotes(): Observable<List<Note>> {
+        return RetrofitClient.evernoteApi
             .listNotes()
-            .enqueue(callback)
+            .subscribeOn(Schedulers.io()) // Thread Parallel
+            .observeOn(AndroidSchedulers.mainThread()) // main Thread
     }
 
-    fun getNote(noteId: Int, callback: Callback<Note>) {
-        RetrofitClient.evernoteApi
+    fun getNote(noteId: Int): Observable<Note> {
+        return RetrofitClient.evernoteApi
             .getNote(noteId)
-            .enqueue(callback)
+            .subscribeOn(Schedulers.io()) // Thread Parallel
+            .observeOn(AndroidSchedulers.mainThread()) // main Thread
     }
 
-    fun createNote(note: Note, callback: Callback<Note>) {
-        RetrofitClient.evernoteApi
+    fun createNote(note: Note): Observable<Note> {
+        return RetrofitClient.evernoteApi
             .createNote(note)
-            .enqueue(callback)
+            .subscribeOn(Schedulers.io()) // Thread Parallel
+            .observeOn(AndroidSchedulers.mainThread()) // main Thread
     }
 
 }
