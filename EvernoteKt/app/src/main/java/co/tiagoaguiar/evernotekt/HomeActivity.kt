@@ -10,8 +10,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import co.tiagoaguiar.evernotekt.model.DaggerUserComponent
 import co.tiagoaguiar.evernotekt.model.Note
 import co.tiagoaguiar.evernotekt.model.RemoteDataSource
+import co.tiagoaguiar.evernotekt.model.User
 import com.google.android.material.navigation.NavigationView
 import io.reactivex.Observable
 import io.reactivex.Observer
@@ -31,7 +33,7 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     private val dataSource = RemoteDataSource()
 
-    // compositeDisposable -> todos observers que podem ser descartados serão limpados então os os observables não emitirão mais msg
+    // compositeDisposable -> todos observers que podem ser descartados serão limpos então os observables não emitirão mais msg
     private val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,11 +70,15 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     override fun onStart() {
         super.onStart()
         getAllNotes()
+
+        val component = DaggerUserComponent.builder().build()
+        val user = component.getUser()
+        dataSource.createNoteFromUser(user)
     }
 
     override fun onStop() {
         super.onStop()
-        // todos observers que podem ser descartados serão limpados então os os observables não emitirão mais msg
+        // todos observers que podem ser descartados serão limpos então os os observables não emitirão mais msg
         compositeDisposable.clear()
     }
 

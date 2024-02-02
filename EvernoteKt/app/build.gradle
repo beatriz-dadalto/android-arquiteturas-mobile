@@ -4,6 +4,8 @@ apply plugin: 'kotlin-android'
 
 apply plugin: 'kotlin-android-extensions'
 
+apply plugin: 'kotlin-kapt'
+
 android {
     compileSdkVersion 34
     defaultConfig {
@@ -27,7 +29,7 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'
     // Kotlin language implementation
     implementation "androidx.core:core-ktx:1.1.0"
@@ -45,6 +47,11 @@ dependencies {
     // a lib for composing asynchronous and event-based programs -> https://github.com/ReactiveX/RxJava
     implementation "io.reactivex.rxjava2:rxandroid:$rxjava_version"
     implementation "io.reactivex.rxjava2:rxjava:$rxjava_version"
+
+    // A fast dependency injector for Android and Java -> https://github.com/google/dagger
+    implementation "com.google.dagger:dagger:$dagger_version"
+    kapt "com.google.dagger:dagger-compiler:$dagger_version"
+    kapt "com.google.dagger:dagger-android-processor:$dagger_version"
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test:runner:1.2.0'

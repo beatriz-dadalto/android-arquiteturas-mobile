@@ -4,6 +4,7 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
 
 data class Note(
     var id: Int = 0,
@@ -12,6 +13,9 @@ data class Note(
     var date: String? = null,
     var body: String? = null
 ) {
+
+    @Inject constructor(): this(0, "Instancia injetada via Dagger.")
+
     val createdDate: String
         get() {
             val locale = Locale("pt", "BR")

@@ -2,10 +2,8 @@ package co.tiagoaguiar.evernotekt.model
 
 import co.tiagoaguiar.evernotekt.network.RetrofitClient
 import io.reactivex.Observable
-import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
-import retrofit2.Callback
 
 class RemoteDataSource {
 
@@ -30,4 +28,7 @@ class RemoteDataSource {
             .observeOn(AndroidSchedulers.mainThread()) // main Thread
     }
 
+    fun createNoteFromUser(user: User) {
+        user.showNoteTitle()
+    }
 }

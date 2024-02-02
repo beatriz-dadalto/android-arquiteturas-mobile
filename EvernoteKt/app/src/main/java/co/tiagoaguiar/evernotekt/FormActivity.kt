@@ -28,7 +28,7 @@ class FormActivity : AppCompatActivity(), TextWatcher {
 
     private val dataSource = RemoteDataSource()
 
-    // compositeDisposable -> todos observers que podem ser descartados serão limpados então os os observables não emitirão mais msg
+    // compositeDisposable -> todos observers que podem ser descartados serão limpos então os os observables não emitirão mais msg
     private val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,7 +49,7 @@ class FormActivity : AppCompatActivity(), TextWatcher {
 
     override fun onStop() {
         super.onStop()
-        // compositeDisposable -> todos observers que podem ser descartados serão limpados então os os observables não emitirão mais msg
+        // compositeDisposable -> todos observers que podem ser descartados serão limpos então os os observables não emitirão mais msg
         compositeDisposable.clear()
     }
 
