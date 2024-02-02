@@ -25,7 +25,7 @@ class AddNotePresenter(
 
             override fun onError(e: Throwable) {
                 e.printStackTrace()
-                view.displayError("Erro ao carregar notas")
+                view.displayError("Erro ao criar a nota.")
             }
 
             override fun onComplete() {
