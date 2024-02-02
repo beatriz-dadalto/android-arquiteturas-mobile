@@ -1,4 +1,4 @@
-package co.tiagoaguiar.evernotekt
+package co.tiagoaguiar.evernotekt.home.view
 
 import android.content.Intent
 import android.os.Bundle
@@ -10,37 +10,36 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import co.tiagoaguiar.evernotekt.model.DaggerUserComponent
+import co.tiagoaguiar.evernotekt.addNote.view.FormActivity
+import co.tiagoaguiar.evernotekt.R
+import co.tiagoaguiar.evernotekt.home.Home
+import co.tiagoaguiar.evernotekt.home.presenter.HomePresenter
 import co.tiagoaguiar.evernotekt.model.Note
 import co.tiagoaguiar.evernotekt.model.RemoteDataSource
-import co.tiagoaguiar.evernotekt.model.User
 import com.google.android.material.navigation.NavigationView
-import io.reactivex.Observable
-import io.reactivex.Observer
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
-import io.reactivex.observers.DisposableObserver
-import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_home.*
 import kotlinx.android.synthetic.main.app_bar_home.*
 import kotlinx.android.synthetic.main.content_home.*
-import retrofit2.Callback
-import retrofit2.Response
 
 
-class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener,
+    Home.View {
 
+    private lateinit var homePresenter: HomePresenter
     private val dataSource = RemoteDataSource()
-
-    // compositeDisposable -> todos observers que podem ser descartados serão limpos então os observables não emitirão mais msg
-    private val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
+        setupPresenter()
         setupViews()
+    }
+
+    private fun setupPresenter() {
+        // criar as dependencias
+        val dataSource = RemoteDataSource()
+        homePresenter = HomePresenter(this, dataSource)
     }
 
     private fun setupViews() {
@@ -69,64 +68,12 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     override fun onStart() {
         super.onStart()
-        getAllNotes()
-
-        val component = DaggerUserComponent.builder().build()
-        val user = component.getUser()
-        dataSource.createNoteFromUser(user)
+        homePresenter.getAllNotes()
     }
 
     override fun onStop() {
         super.onStop()
-        // todos observers que podem ser descartados serão limpos então os os observables não emitirão mais msg
-        compositeDisposable.clear()
-    }
-
-    // requisição no RETROFIT
-    private fun getAllNotes() {
-        val disposable = dataSource.listNotes()
-            .subscribeOn(Schedulers.io()) // Thread Parallel
-            .observeOn(AndroidSchedulers.mainThread()) // main Thread
-            .subscribeWith(notesObserver)
-        // retirar o observer do observable
-        compositeDisposable.add(disposable)
-    }
-
-    private val notesObserver: DisposableObserver<List<Note>>
-        get() = object : DisposableObserver<List<Note>>() {
-            override fun onNext(notes: List<Note>) {
-                displayNotes(notes)
-            }
-
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-                displayError("Erro ao carregar notas.")
-            }
-
-            override fun onComplete() {
-                println("Completed!")
-            }
-        }
-
-    fun displayError(message: String) {
-        showToast(message)
-    }
-
-    private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
-
-    private fun displayNotes(notes: List<Note>) {
-        // progress
-        if (notes.isNotEmpty()) {
-            home_recycler_view.adapter = NoteAdapter(notes) { note ->
-                val intent = Intent(baseContext, FormActivity::class.java)
-                intent.putExtra("noteId", note.id)
-                startActivity(intent)
-            }
-        } else {
-            // no data
-        }
+        homePresenter.stop()
     }
 
     override fun onBackPressed() {
@@ -158,6 +105,26 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         drawer_layout.closeDrawer(GravityCompat.START)
         return true
+    }
+
+    override fun displayError(message: String) {
+        showToast(message)
+    }
+
+    override fun displayEmptyNotes() {
+        // TODO("Not yet implemented")
+    }
+
+    override fun displayNotes(notes: List<Note>) {
+        home_recycler_view.adapter = NoteAdapter(notes) { note ->
+            val intent = Intent(baseContext, FormActivity::class.java)
+            intent.putExtra("noteId", note.id)
+            startActivity(intent)
+        }
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
 }

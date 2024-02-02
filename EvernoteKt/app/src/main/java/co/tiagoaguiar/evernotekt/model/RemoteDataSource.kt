@@ -27,8 +27,4 @@ class RemoteDataSource {
             .subscribeOn(Schedulers.io()) // Thread Parallel
             .observeOn(AndroidSchedulers.mainThread()) // main Thread
     }
-
-    fun createNoteFromUser(user: User) {
-        user.showNoteTitle()
-    }
 }
