@@ -8,7 +8,7 @@
     android:layout_marginEnd="8dp"
     android:orientation="vertical"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".addNote.view.FormActivity"
+    tools:context=".view.activities.FormActivity"
     tools:showIn="@layout/activity_form">
 
     <androidx.appcompat.widget.AppCompatEditText

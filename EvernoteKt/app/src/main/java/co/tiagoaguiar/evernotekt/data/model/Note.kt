@@ -1,10 +1,8 @@
-package co.tiagoaguiar.evernotekt.model
+package co.tiagoaguiar.evernotekt.data.model
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import javax.inject.Inject
+import java.util.*
 
 data class Note(
     var id: Int = 0,

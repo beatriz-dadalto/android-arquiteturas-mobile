@@ -1,4 +1,4 @@
-package co.tiagoaguiar.evernotekt.addNote.view
+package co.tiagoaguiar.evernotekt.view.activities
 
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
@@ -11,18 +11,22 @@ import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import co.tiagoaguiar.evernotekt.R
-import co.tiagoaguiar.evernotekt.addNote.AddNote
-import co.tiagoaguiar.evernotekt.addNote.presenter.AddNotePresenter
-import co.tiagoaguiar.evernotekt.model.RemoteDataSource
+import co.tiagoaguiar.evernotekt.data.model.Note
+import co.tiagoaguiar.evernotekt.data.model.RemoteDataSource
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.observers.DisposableObserver
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_form.*
 import kotlinx.android.synthetic.main.content_form.*
 
-class FormActivity : AppCompatActivity(), TextWatcher, AddNote.View {
+class FormActivity : AppCompatActivity(), TextWatcher {
 
     private var toSave: Boolean = false
     private var noteId: Int? = null
 
-    private lateinit var addNotePresenter: AddNotePresenter
+    private val dataSource = RemoteDataSource()
+    private val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,26 +34,57 @@ class FormActivity : AppCompatActivity(), TextWatcher, AddNote.View {
 
         noteId = intent.extras?.getInt("noteId")
 
-        setupPresenter()
         setupViews()
     }
 
     override fun onStart() {
         super.onStart()
         noteId?.let {
-            addNotePresenter.getNote(it)
+            getNote(it)
         }
     }
 
     override fun onStop() {
         super.onStop()
-        addNotePresenter.stop()
+        compositeDisposable.clear()
     }
 
-    private fun setupPresenter() {
-        val dataSource = RemoteDataSource()
-        addNotePresenter = AddNotePresenter(this, dataSource)
+    private fun getNote(noteId: Int) {
+        val disposable = dataSource.getNote(noteId)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeWith(getNoteObserver)
+
+        compositeDisposable.add(disposable)
     }
+
+    private fun createNote(note: Note) {
+        val disposable = dataSource.createNote(note)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeWith(createNoteObserver)
+
+        compositeDisposable.add(disposable)
+    }
+
+    private val getNoteObserver: DisposableObserver<Note>
+        get() = object : DisposableObserver<Note>() {
+
+            override fun onComplete() {
+                println("complete")
+            }
+
+            override fun onNext(note: Note) {
+                displayNote(note)
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+                displayError("Erro ao carregar notas")
+            }
+
+        }
+
 
     private fun setupViews() {
         setSupportActionBar(toolbar)
@@ -74,33 +109,56 @@ class FormActivity : AppCompatActivity(), TextWatcher, AddNote.View {
         }
     }
 
-    override fun displayError(message: String) {
+
+    private val createNoteObserver: DisposableObserver<Note>
+        get() = object : DisposableObserver<Note>() {
+
+            override fun onComplete() {
+                println("complete")
+            }
+
+            override fun onNext(note: Note) {
+                finish()
+            }
+
+            override fun onError(e: Throwable) {
+                e.printStackTrace()
+                displayError("Erro ao carregar notas")
+            }
+
+        }
+
+    fun displayError(message: String) {
         showToast(message)
-    }
-
-    override fun displayNote(title: String, body: String) {
-        note_title.setText(title)
-        note_editor.setText(body)
-    }
-
-    override fun returnToHome() {
-        finish()
     }
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
+    private fun displayNote(note: Note?) {
+        // progress
+        if (note != null) {
+            note_title.setText(note.title)
+            note_editor.setText(note.body)
+        } else {
+            // no data
+        }
+    }
+
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
             return if (toSave && noteId == null) {
-                val title = note_title.text.toString()
-                val body = note_editor.text.toString()
+                val note = Note()
+                note.title = note_title.text.toString()
+                note.body = note_editor.text.toString()
 
-                addNotePresenter.createNote(title, body)
+                createNote(note)
+
                 true
             } else {
-                returnToHome()
+                finish()
                 true
             }
         }
@@ -123,4 +181,5 @@ class FormActivity : AppCompatActivity(), TextWatcher, AddNote.View {
 
     override fun afterTextChanged(editable: Editable) {
     }
+
 }

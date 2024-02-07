@@ -1,6 +1,6 @@
 package co.tiagoaguiar.evernotekt
 
-import co.tiagoaguiar.evernotekt.model.Note
+import co.tiagoaguiar.evernotekt.data.model.Note
 import org.junit.Assert
 import org.junit.Test
 

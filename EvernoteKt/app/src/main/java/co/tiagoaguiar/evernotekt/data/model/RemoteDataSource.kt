@@ -1,6 +1,6 @@
-package co.tiagoaguiar.evernotekt.model
+package co.tiagoaguiar.evernotekt.data.model
 
-import co.tiagoaguiar.evernotekt.network.RetrofitClient
+import co.tiagoaguiar.evernotekt.data.network.RetrofitClient
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers

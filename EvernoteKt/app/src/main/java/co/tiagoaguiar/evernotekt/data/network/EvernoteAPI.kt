@@ -1,6 +1,6 @@
-package co.tiagoaguiar.evernotekt.network
+package co.tiagoaguiar.evernotekt.data.network
 
-import co.tiagoaguiar.evernotekt.model.Note
+import co.tiagoaguiar.evernotekt.data.model.Note
 import io.reactivex.Observable
 import retrofit2.Call
 import retrofit2.http.Body
