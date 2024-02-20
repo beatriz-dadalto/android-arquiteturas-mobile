@@ -10,9 +10,15 @@ import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
+import androidx.lifecycle.get
 import co.tiagoaguiar.evernotekt.R
 import co.tiagoaguiar.evernotekt.data.model.Note
 import co.tiagoaguiar.evernotekt.data.model.RemoteDataSource
+import co.tiagoaguiar.evernotekt.databinding.ActivityFormBinding
+import co.tiagoaguiar.evernotekt.viewmodel.AddViewModel
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.observers.DisposableObserver
@@ -25,12 +31,20 @@ class FormActivity : AppCompatActivity(), TextWatcher {
     private var toSave: Boolean = false
     private var noteId: Int? = null
 
+    private lateinit var viewModel: AddViewModel
+
     private val dataSource = RemoteDataSource()
     private val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_form)
+
+        val binding =
+            DataBindingUtil.setContentView<ActivityFormBinding>(this, R.layout.activity_form)
+
+        // qual viewModel vai ficar dentro desse dataBing
+        viewModel = ViewModelProviders.of(this).get(AddViewModel::class.java)
+        binding.viewModel = viewModel
 
         noteId = intent.extras?.getInt("noteId")
 
@@ -42,6 +56,18 @@ class FormActivity : AppCompatActivity(), TextWatcher {
         noteId?.let {
             getNote(it)
         }
+
+        setupLiveDataObserver()
+    }
+
+    private fun setupLiveDataObserver() {
+        viewModel.saved.observe(this, Observer { saved ->
+            if (saved) {
+                finish()
+            } else {
+                displayError("Título e nota devem ser informados.")
+            }
+        })
     }
 
     override fun onStop() {
@@ -54,15 +80,6 @@ class FormActivity : AppCompatActivity(), TextWatcher {
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeWith(getNoteObserver)
-
-        compositeDisposable.add(disposable)
-    }
-
-    private fun createNote(note: Note) {
-        val disposable = dataSource.createNote(note)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeWith(createNoteObserver)
 
         compositeDisposable.add(disposable)
     }
@@ -82,9 +99,7 @@ class FormActivity : AppCompatActivity(), TextWatcher {
                 e.printStackTrace()
                 displayError("Erro ao carregar notas")
             }
-
         }
-
 
     private fun setupViews() {
         setSupportActionBar(toolbar)
@@ -109,25 +124,6 @@ class FormActivity : AppCompatActivity(), TextWatcher {
         }
     }
 
-
-    private val createNoteObserver: DisposableObserver<Note>
-        get() = object : DisposableObserver<Note>() {
-
-            override fun onComplete() {
-                println("complete")
-            }
-
-            override fun onNext(note: Note) {
-                finish()
-            }
-
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-                displayError("Erro ao carregar notas")
-            }
-
-        }
-
     fun displayError(message: String) {
         showToast(message)
     }
@@ -146,16 +142,14 @@ class FormActivity : AppCompatActivity(), TextWatcher {
         }
     }
 
+    private fun saveNoteClicked() {
+        viewModel.createNote()
+    }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
             return if (toSave && noteId == null) {
-                val note = Note()
-                note.title = note_title.text.toString()
-                note.body = note_editor.text.toString()
-
-                createNote(note)
-
+                saveNoteClicked()
                 true
             } else {
                 finish()

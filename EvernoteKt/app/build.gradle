@@ -25,6 +25,10 @@ android {
     namespace 'co.tiagoaguiar.evernotekt'
 
     android.defaultConfig.vectorDrawables.useSupportLibrary = true
+
+    dataBinding {
+        enabled = true
+    }
 }
 
 dependencies {
@@ -33,8 +37,6 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
     // Kotlin language implementation
     implementation "androidx.core:core-ktx:1.1.0"
-    // Java language implementation
-    implementation "androidx.core:core:1.3.1"
     implementation 'com.google.android.material:material:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
 
@@ -48,19 +50,16 @@ dependencies {
     implementation "io.reactivex.rxjava2:rxandroid:$rxjava_version"
     implementation "io.reactivex.rxjava2:rxjava:$rxjava_version"
 
-    // A fast dependency injector for Android and Java -> https://github.com/google/dagger
-    implementation "com.google.dagger:dagger:$dagger_version"
-    kapt "com.google.dagger:dagger-compiler:$dagger_version"
-    kapt "com.google.dagger:dagger-android-processor:$dagger_version"
-
     // Most popular Mocking framework for unit tests -> https://github.com/mockito/mockito
     testImplementation 'org.mockito:mockito-core:5.8.0'
     // Using Mockito with Kotlin  -> https://github.com/mockito/mockito-kotlin
     testImplementation('com.nhaarman:mockito-kotlin-kt1.1:1.5.0', {
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib'
     })
+    testImplementation "androidx.arch.core:core-testing:2.0.0"
 
     // Lifecycle
+//    implementation "androidx.lifecycle:lifecycle-*:2.6.1"
     implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
     implementation "androidx.lifecycle:lifecycle-viewmodel:$lifecycle_version"
 

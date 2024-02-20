@@ -4,15 +4,14 @@ buildscript {
     ext.kotlin_version = '1.6.21'
     ext.retrofit_version = '2.6.1'
     ext.rxjava_version = '2.1.1'
-    ext.dagger_version = '2.15'
     ext.lifecycle_version = '2.1.0-alpha02'
     repositories {
         google()
         jcenter()
-        
+
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.2'
+        classpath 'com.android.tools.build:gradle:7.4.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -23,7 +22,7 @@ allprojects {
     repositories {
         google()
         jcenter()
-        
+
     }
 }
 

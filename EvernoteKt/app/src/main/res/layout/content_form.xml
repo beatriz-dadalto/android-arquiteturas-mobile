@@ -1,76 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_marginStart="8dp"
-    android:layout_marginEnd="8dp"
-    android:orientation="vertical"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context=".view.activities.FormActivity"
     tools:showIn="@layout/activity_form">
 
-    <androidx.appcompat.widget.AppCompatEditText
-        android:id="@+id/note_title"
-        android:background="@null"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Título"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        tools:text="Note title" />
+    <data>
+        <variable
+            name="viewModelPass"
+            type="co.tiagoaguiar.evernotekt.viewmodel.AddViewModel" />
+    </data>
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/side_nav_bar"
-        android:orientation="horizontal">
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@android:color/transparent"
-            android:drawableStart="@drawable/ic_note_add_black_24dp"
-            android:drawablePadding="4dp"
-            android:text="@string/app_name" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/note_tag"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="8dp"
-            android:layout_toStartOf="@+id/note_info"
-            app:srcCompat="@drawable/ic_label_outline_black_24dp" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/note_info"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="8dp"
-            app:srcCompat="@drawable/ic_info_outline_black_24dp" />
-
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/note_timer"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="8dp"
-            android:layout_toStartOf="@id/note_tag"
-            app:srcCompat="@drawable/ic_access_time_black_24dp" />
-    </RelativeLayout>
-
-    <androidx.appcompat.widget.AppCompatEditText
-        android:id="@+id/note_editor"
-        android:gravity="top"
-        android:layout_marginTop="12dp"
-        android:hint="Escreva aqui..."
-        android:background="@null"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:inputType="textMultiLine" />
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:orientation="vertical"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-</LinearLayout>
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/note_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:hint="Título"
+            android:text="@={viewModelPass.title}"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            tools:text="Note title" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/side_nav_bar"
+            android:orientation="horizontal">
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@android:color/transparent"
+                android:drawableStart="@drawable/ic_note_add_black_24dp"
+                android:drawablePadding="4dp"
+                android:text="@string/app_name" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/note_tag"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                android:layout_toStartOf="@+id/note_info"
+                app:srcCompat="@drawable/ic_label_outline_black_24dp" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/note_info"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                app:srcCompat="@drawable/ic_info_outline_black_24dp" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/note_timer"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="8dp"
+                android:layout_toStartOf="@id/note_tag"
+                app:srcCompat="@drawable/ic_access_time_black_24dp" />
+        </RelativeLayout>
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/note_editor"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="12dp"
+            android:background="@null"
+            android:gravity="top"
+            android:text="@={viewModelPass.body}"
+            android:hint="Escreva aqui..."
+            android:inputType="textMultiLine" />
+
+    </LinearLayout>
+</layout>

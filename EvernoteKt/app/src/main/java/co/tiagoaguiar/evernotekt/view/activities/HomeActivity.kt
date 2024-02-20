@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -57,10 +58,6 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         home_recycler_view.addItemDecoration(divider)
         home_recycler_view.layoutManager = LinearLayoutManager(this)
 
-        fab.setOnClickListener {
-            val intent = Intent(baseContext, FormActivity::class.java)
-            startActivity(intent)
-        }
     }
 
     override fun onStart() {
@@ -133,6 +130,11 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         drawer_layout.closeDrawer(GravityCompat.START)
         return true
+    }
+
+    fun fabClicked(view: View) {
+        val intent = Intent(baseContext, FormActivity::class.java)
+        startActivity(intent)
     }
 
 }
