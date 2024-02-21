@@ -33,9 +33,6 @@ class FormActivity : AppCompatActivity(), TextWatcher {
 
     private lateinit var viewModel: AddViewModel
 
-    private val dataSource = RemoteDataSource()
-    private val compositeDisposable = CompositeDisposable()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -53,10 +50,6 @@ class FormActivity : AppCompatActivity(), TextWatcher {
 
     override fun onStart() {
         super.onStart()
-        noteId?.let {
-            getNote(it)
-        }
-
         setupLiveDataObserver()
     }
 
@@ -68,20 +61,16 @@ class FormActivity : AppCompatActivity(), TextWatcher {
                 displayError("Título e nota devem ser informados.")
             }
         })
-    }
 
-    override fun onStop() {
-        super.onStop()
-        compositeDisposable.clear()
-    }
-
-    private fun getNote(noteId: Int) {
-        val disposable = dataSource.getNote(noteId)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeWith(getNoteObserver)
-
-        compositeDisposable.add(disposable)
+        noteId?.let {
+            viewModel.getNote(it).observe(this, Observer { note ->
+                if (note == null) {
+                    displayError("Erro ao buscar nota.")
+                } else {
+                    displayNote(note)
+                }
+            })
+        }
     }
 
     private val getNoteObserver: DisposableObserver<Note>
@@ -132,14 +121,9 @@ class FormActivity : AppCompatActivity(), TextWatcher {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
-    private fun displayNote(note: Note?) {
-        // progress
-        if (note != null) {
-            note_title.setText(note.title)
-            note_editor.setText(note.body)
-        } else {
-            // no data
-        }
+    private fun displayNote(note: Note) {
+        note_title.setText(note.title)
+        note_editor.setText(note.body)
     }
 
     private fun saveNoteClicked() {

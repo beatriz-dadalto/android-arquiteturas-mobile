@@ -65,15 +65,10 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         observeAllNotes()
     }
 
-    override fun onStop() {
-        super.onStop()
-//        compositeDisposable.clear()
-    }
-
     private fun observeAllNotes() {
         viewModel.getAllNotes().observe(this, Observer { notes ->
             if (notes == null) {
-                displayError("Erro ao carregar notas.")
+                displayError("Erro ao buscar lista.")
             } else {
                 displayNotes(notes)
             }
@@ -91,11 +86,15 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private fun displayNotes(notes: List<Note>) {
         // progress
         if (notes.isNotEmpty()) {
-            home_recycler_view.adapter = NoteAdapter(notes) { note ->
-                val intent = Intent(baseContext, FormActivity::class.java)
-                intent.putExtra("noteId", note.id)
-                startActivity(intent)
-            }
+            home_recycler_view.adapter =
+                NoteAdapter(notes) { note ->
+                    val intent = Intent(
+                        baseContext,
+                        FormActivity::class.java
+                    )
+                    intent.putExtra("noteId", note.id)
+                    startActivity(intent)
+                }
         } else {
             // no data
         }

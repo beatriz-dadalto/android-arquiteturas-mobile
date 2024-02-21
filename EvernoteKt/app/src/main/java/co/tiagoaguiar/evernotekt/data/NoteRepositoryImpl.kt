@@ -49,7 +49,29 @@ class NoteRepositoryImpl : INoteRepository {
     }
 
     override fun getNote(noteId: Int): LiveData<Note?> {
-        TODO()
+        val data = MutableLiveData<Note?>()
+
+        val disposable = remoteDataSource.getNote(noteId)
+            .observeOn(Schedulers.io())
+            .subscribeOn(AndroidSchedulers.mainThread())
+            .subscribeWith(object : DisposableObserver<Note>() {
+                override fun onComplete() {
+                    println("complete")
+                }
+
+                override fun onNext(note: Note) {
+                    data.postValue(note)
+                }
+
+                override fun onError(e: Throwable) {
+                    e.printStackTrace()
+                    data.postValue(null)
+                }
+            })
+
+        compositeDisposable.add(disposable)
+
+        return data
     }
 
     override fun createNote(note: Note): LiveData<Note> {

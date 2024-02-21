@@ -35,4 +35,6 @@ class AddViewModel(
         repository.createNote(note)
         saveLiveData.value = true
     }
+
+    fun getNote(id: Int) = repository.getNote(id)
 }
