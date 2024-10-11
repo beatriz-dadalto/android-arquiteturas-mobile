@@ -35,4 +35,5 @@
     <string name="menu_sync">LAST SYNC</string>
 
     <string name="evernote_version_usage">You are using Evernote Basic</string>
+    <string name="btn_escrever_nota">Escrever nota</string>
 </resources>

@@ -9,6 +9,6 @@ interface INoteRepository {
 
     fun getNote(noteId: Int): LiveData<Note?>
 
-    fun createNote(note: Note): LiveData<Note>
+    fun createNote(note: Note): LiveData<Note?>
 
 }

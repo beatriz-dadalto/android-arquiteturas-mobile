@@ -28,8 +28,8 @@ class NoteRepositoryImpl : INoteRepository {
             .subscribeOn(Schedulers.io()) // Thread Parallel
             .observeOn(AndroidSchedulers.mainThread()) // main Thread
             .subscribeWith(object : DisposableObserver<List<Note>>() {
-                override fun onNext(notes: List<Note>) {
-                    data.postValue(notes)
+                override fun onNext(note: List<Note>) {
+                    data.postValue(note)
                 }
 
                 override fun onError(e: Throwable) {
@@ -74,8 +74,8 @@ class NoteRepositoryImpl : INoteRepository {
         return data
     }
 
-    override fun createNote(note: Note): LiveData<Note> {
-        val data = MutableLiveData<Note>()
+    override fun createNote(note: Note): LiveData<Note?> {
+        val data = MutableLiveData<Note?>()
 
         val disposable = remoteDataSource.createNote(note)
             .subscribeOn(Schedulers.io())

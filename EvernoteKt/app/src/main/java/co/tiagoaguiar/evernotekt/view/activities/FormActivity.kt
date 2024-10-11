@@ -10,124 +10,82 @@ import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
-import androidx.lifecycle.get
+import co.tiagoaguiar.evernotekt.App
+import co.tiagoaguiar.evernotekt.IForm
 import co.tiagoaguiar.evernotekt.R
 import co.tiagoaguiar.evernotekt.data.model.Note
-import co.tiagoaguiar.evernotekt.data.model.RemoteDataSource
-import co.tiagoaguiar.evernotekt.databinding.ActivityFormBinding
-import co.tiagoaguiar.evernotekt.viewmodel.AddViewModel
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.observers.DisposableObserver
-import io.reactivex.schedulers.Schedulers
+import co.tiagoaguiar.evernotekt.interactor.FormInteractor
+import co.tiagoaguiar.evernotekt.presenter.FormPresenter
 import kotlinx.android.synthetic.main.activity_form.*
 import kotlinx.android.synthetic.main.content_form.*
+import ru.terrakok.cicerone.Navigator
+import ru.terrakok.cicerone.Router
+import ru.terrakok.cicerone.commands.Back
 
-class FormActivity : AppCompatActivity(), TextWatcher {
+class FormActivity : AppCompatActivity(), IForm.View, TextWatcher {
+
+    companion object {
+        val TAG = "FormActivity"
+    }
+
+    private val navigator: Navigator? by lazy {
+        Navigator { command ->
+            if (command is Back) {
+                finish()
+            }
+        }
+    }
 
     private var toSave: Boolean = false
     private var noteId: Int? = null
 
-    private lateinit var viewModel: AddViewModel
+    private lateinit var presenter: IForm.Presenter
+
+    private val router: Router? by lazy {
+        App.INSTANCE.cicerone.router
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val binding =
-            DataBindingUtil.setContentView<ActivityFormBinding>(this, R.layout.activity_form)
-
-        // qual viewModel vai ficar dentro desse dataBing
-        viewModel = ViewModelProviders.of(this).get(AddViewModel::class.java)
-        binding.viewModel = viewModel
+        setContentView(R.layout.activity_form)
 
         noteId = intent.extras?.getInt("noteId")
+
+        presenter = FormPresenter(this, FormInteractor(), router)
 
         setupViews()
     }
 
     override fun onStart() {
         super.onStart()
-        setupLiveDataObserver()
+        presenter.onStart(noteId)
     }
 
-    private fun setupLiveDataObserver() {
-        viewModel.saved.observe(this, Observer { saved ->
-            if (saved) {
-                finish()
-            } else {
-                displayError("Título e nota devem ser informados.")
-            }
-        })
-
-        noteId?.let {
-            viewModel.getNote(it).observe(this, Observer { note ->
-                if (note == null) {
-                    displayError("Erro ao buscar nota.")
-                } else {
-                    displayNote(note)
-                }
-            })
-        }
+    override fun onResume() {
+        super.onResume()
+        App.INSTANCE.cicerone.navigatorHolder.setNavigator(navigator)
     }
 
-    private val getNoteObserver: DisposableObserver<Note>
-        get() = object : DisposableObserver<Note>() {
-
-            override fun onComplete() {
-                println("complete")
-            }
-
-            override fun onNext(note: Note) {
-                displayNote(note)
-            }
-
-            override fun onError(e: Throwable) {
-                e.printStackTrace()
-                displayError("Erro ao carregar notas")
-            }
-        }
-
-    private fun setupViews() {
-        setSupportActionBar(toolbar)
-        toggleToolbar(R.drawable.ic_arrow_back_black_24dp)
-
-        note_title.addTextChangedListener(this)
-        note_editor.addTextChangedListener(this)
+    override fun onPause() {
+        super.onPause()
+        App.INSTANCE.cicerone.navigatorHolder.removeNavigator()
     }
 
-    private fun toggleToolbar(@DrawableRes icon: Int) {
-        supportActionBar?.let {
-            it.title = null
-            val upArrow = ContextCompat.getDrawable(this, icon)
-            val colorFilter =
-                PorterDuffColorFilter(
-                    ContextCompat.getColor(this, R.color.colorAccent),
-                    PorterDuff.Mode.SRC_ATOP
-                )
-            upArrow?.colorFilter = colorFilter
-            it.setHomeAsUpIndicator(upArrow)
-            it.setDisplayHomeAsUpEnabled(true)
-        }
+    private fun saveNoteClicked() {
+        presenter.saveNote(note_title.text.toString(), note_editor.text.toString())
     }
 
-    fun displayError(message: String) {
-        showToast(message)
+    private fun backClicked() {
+        presenter.backPressClick()
     }
 
-    private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
-
-    private fun displayNote(note: Note) {
+    override fun displayNote(note: Note) {
         note_title.setText(note.title)
         note_editor.setText(note.body)
     }
 
-    private fun saveNoteClicked() {
-        viewModel.createNote()
+    override fun displayError(message: String) {
+        showToast(message)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -136,7 +94,7 @@ class FormActivity : AppCompatActivity(), TextWatcher {
                 saveNoteClicked()
                 true
             } else {
-                finish()
+                backClicked()
                 true
             }
         }
@@ -158,6 +116,33 @@ class FormActivity : AppCompatActivity(), TextWatcher {
     }
 
     override fun afterTextChanged(editable: Editable) {
+    }
+
+    private fun toggleToolbar(@DrawableRes icon: Int) {
+        supportActionBar?.let {
+            it.title = null
+            val upArrow = ContextCompat.getDrawable(this, icon)
+            val colorFilter =
+                PorterDuffColorFilter(
+                    ContextCompat.getColor(this, R.color.colorAccent),
+                    PorterDuff.Mode.SRC_ATOP
+                )
+            upArrow?.colorFilter = colorFilter
+            it.setHomeAsUpIndicator(upArrow)
+            it.setDisplayHomeAsUpEnabled(true)
+        }
+    }
+
+    private fun setupViews() {
+        setSupportActionBar(toolbar)
+        toggleToolbar(R.drawable.ic_arrow_back_black_24dp)
+
+        note_title.addTextChangedListener(this)
+        note_editor.addTextChangedListener(this)
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
 }

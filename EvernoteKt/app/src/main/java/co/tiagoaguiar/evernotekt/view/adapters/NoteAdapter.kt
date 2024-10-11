@@ -1,16 +1,12 @@
 package co.tiagoaguiar.evernotekt.view.adapters
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
 import co.tiagoaguiar.evernotekt.R
-import co.tiagoaguiar.evernotekt.data.model.Note
 import co.tiagoaguiar.evernotekt.databinding.ListItemNoteBinding
-import kotlinx.android.synthetic.main.list_item_note.view.*
+import co.tiagoaguiar.evernotekt.data.model.Note
 
 class NoteAdapter(private val notes: List<Note>, val onClickListener: (Note) -> Unit) :
     RecyclerView.Adapter<NoteAdapter.NoteView>() {

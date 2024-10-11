@@ -5,10 +5,13 @@ buildscript {
     ext.retrofit_version = '2.6.1'
     ext.rxjava_version = '2.1.1'
     ext.lifecycle_version = '2.1.0-alpha02'
+    ext.cicerone_version = '2.1.0'
     repositories {
         google()
         jcenter()
-
+        mavenCentral()
+        maven { url 'https://jitpack.io' }
+        maven { url = uri("https://jitpack.io") }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.4.1'
@@ -22,7 +25,8 @@ allprojects {
     repositories {
         google()
         jcenter()
-
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
