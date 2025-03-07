@@ -1,63 +1,43 @@
 package co.tiagoaguiar.evernotekt.presenter
 
-import androidx.lifecycle.Observer
-import co.tiagoaguiar.evernotekt.IForm
-import co.tiagoaguiar.evernotekt.data.model.Note
-import co.tiagoaguiar.evernotekt.view.activities.FormActivity
-import ru.terrakok.cicerone.Router
+import co.tiagoaguiar.evernotekt.data.NoteInteractorImpl
+import co.tiagoaguiar.evernotekt.data.model.NoteState
+import co.tiagoaguiar.evernotekt.view.IFormView
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 
-class FormPresenter(
-    private var view: IForm.View?,
-    private var interactor: IForm.Interactor?,
-    private val router: Router?
-) : IForm.Presenter, IForm.InteractorOutput {
+class FormPresenter(private  var interactor: NoteInteractorImpl) {
+    private val compositeDisposable = CompositeDisposable()
 
-    override fun onStart(noteId: Int?) {
-        interactor?.saved()?.observe((view as FormActivity), Observer { saved ->
-            if (saved) {
-                onSaveSuccess()
-            } else {
-                onSaveError()
-            }
-        })
+    private lateinit var view: IFormView
 
-        interactor?.loadNote()?.observe((view as FormActivity), Observer { response ->
-            if (response != null) {
-                onQuerySuccess(response)
-            } else {
-                onQueryError()
-            }
-        })
-
-        noteId?.let { interactor?.getNote(it) }
-    }
-
-    override fun backPressClick() {
-        router?.exit()
-    }
-
-    override fun saveNote(title: String, body: String) {
-        if (title.isEmpty() || body.isEmpty()) {
-            view?.displayError("Título e nota deve ser informado")
-            return
+    fun bind(view: IFormView, id: Int?) {
+        this.view = view
+        id?.let {
+            compositeDisposable.add(observeNoteDisplay(it))
         }
-
-        interactor?.createNote(Note(title = title, body = body))
+        compositeDisposable.add(observeAddNoteIntent())
     }
 
-    override fun onSaveSuccess() {
-        router?.exit()
+    fun unbind() {
+        if (!compositeDisposable.isDisposed) {
+            compositeDisposable.dispose()
+        }
     }
 
-    override fun onSaveError() {
-        view?.displayError("Erro ao salvar nota")
-    }
+    private fun observeNoteDisplay(id: Int) = view.displayNoteIntent()
+        .flatMap { interactor.getNote(id) }
+        .startWith(NoteState.LoadingState)
+        .subscribeOn((Schedulers.io()))
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe { view.render(it) }
 
-    override fun onQuerySuccess(data: Note) {
-        view?.displayNote(data)
-    }
+    private fun observeAddNoteIntent() = view.addNoteIntent()
+        .flatMap { interactor.createNote(it) }
+        .startWith(NoteState.LoadingState)
+        .subscribeOn((Schedulers.io()))
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe { view.render(it) }
 
-    override fun onQueryError() {
-        view?.displayError("Erro ao carregar dados")
-    }
 }

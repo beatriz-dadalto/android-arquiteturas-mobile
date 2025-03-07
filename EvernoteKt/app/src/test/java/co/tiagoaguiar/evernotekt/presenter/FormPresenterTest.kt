@@ -1,6 +1,5 @@
 package co.tiagoaguiar.evernotekt.presenter
 
-import co.tiagoaguiar.evernotekt.IForm
 import co.tiagoaguiar.evernotekt.data.model.Note
 import com.nhaarman.mockito_kotlin.verify
 import org.junit.Assert.*

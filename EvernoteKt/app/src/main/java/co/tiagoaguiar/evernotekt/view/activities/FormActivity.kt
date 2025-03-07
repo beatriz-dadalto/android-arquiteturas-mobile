@@ -10,40 +10,25 @@ import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import co.tiagoaguiar.evernotekt.App
-import co.tiagoaguiar.evernotekt.IForm
 import co.tiagoaguiar.evernotekt.R
+import co.tiagoaguiar.evernotekt.data.NoteInteractorImpl
 import co.tiagoaguiar.evernotekt.data.model.Note
-import co.tiagoaguiar.evernotekt.interactor.FormInteractor
+import co.tiagoaguiar.evernotekt.data.model.NoteState
 import co.tiagoaguiar.evernotekt.presenter.FormPresenter
+import co.tiagoaguiar.evernotekt.view.IFormView
+import io.reactivex.Observable
+import io.reactivex.subjects.PublishSubject
 import kotlinx.android.synthetic.main.activity_form.*
 import kotlinx.android.synthetic.main.content_form.*
-import ru.terrakok.cicerone.Navigator
-import ru.terrakok.cicerone.Router
-import ru.terrakok.cicerone.commands.Back
 
-class FormActivity : AppCompatActivity(), IForm.View, TextWatcher {
-
-    companion object {
-        val TAG = "FormActivity"
-    }
-
-    private val navigator: Navigator? by lazy {
-        Navigator { command ->
-            if (command is Back) {
-                finish()
-            }
-        }
-    }
+class FormActivity : AppCompatActivity(), IFormView, TextWatcher {
 
     private var toSave: Boolean = false
     private var noteId: Int? = null
 
-    private lateinit var presenter: IForm.Presenter
+    private lateinit var presenter: FormPresenter
 
-    private val router: Router? by lazy {
-        App.INSTANCE.cicerone.router
-    }
+    private val publish: PublishSubject<Note> = PublishSubject.create()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,41 +36,53 @@ class FormActivity : AppCompatActivity(), IForm.View, TextWatcher {
 
         noteId = intent.extras?.getInt("noteId")
 
-        presenter = FormPresenter(this, FormInteractor(), router)
+        presenter = FormPresenter(NoteInteractorImpl())
+        presenter.bind(this, noteId)
 
         setupViews()
     }
 
-    override fun onStart() {
-        super.onStart()
-        presenter.onStart(noteId)
+    override fun render(state: NoteState) {
+        when (state) {
+            is NoteState.LoadingState -> renderLoadingState()
+            is NoteState.SingleDataState -> renderDataState(state)
+            is NoteState.ErrorState -> renderErrorState(state)
+            is NoteState.FinishState -> renderFinishState()
+        }
     }
 
-    override fun onResume() {
-        super.onResume()
-        App.INSTANCE.cicerone.navigatorHolder.setNavigator(navigator)
+    private fun renderFinishState() {
+        finish()
     }
 
-    override fun onPause() {
-        super.onPause()
-        App.INSTANCE.cicerone.navigatorHolder.removeNavigator()
+    private fun renderErrorState(state: NoteState.ErrorState) {
+        showToast(state.data)
     }
 
-    private fun saveNoteClicked() {
-        presenter.saveNote(note_title.text.toString(), note_editor.text.toString())
-    }
-
-    private fun backClicked() {
-        presenter.backPressClick()
-    }
-
-    override fun displayNote(note: Note) {
+    private fun renderDataState(state: NoteState.SingleDataState) {
+        val note = state.data
         note_title.setText(note.title)
         note_editor.setText(note.body)
     }
 
-    override fun displayError(message: String) {
-        showToast(message)
+    private fun renderLoadingState() {
+        showToast("start loading")
+    }
+
+    override fun displayNoteIntent(): Observable<Unit> = Observable.just(Unit)
+
+    override fun addNoteIntent(): Observable<Note> = publish
+
+    private fun saveNoteClicked() {
+        if (note_title.text!!.isEmpty() || note_editor.text!!.isEmpty()) {
+            showToast("Título e nota deve ser informado")
+            return
+        }
+        publish.onNext(Note(title = note_title.text.toString(), body = note_editor.text.toString()))
+    }
+
+    private fun backClicked() {
+        finish()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -143,6 +140,11 @@ class FormActivity : AppCompatActivity(), IForm.View, TextWatcher {
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        presenter.unbind()
     }
 
 }

@@ -11,76 +11,47 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
-import co.tiagoaguiar.evernotekt.App
-import co.tiagoaguiar.evernotekt.IHome
 import co.tiagoaguiar.evernotekt.R
-import co.tiagoaguiar.evernotekt.data.model.Note
-import co.tiagoaguiar.evernotekt.interactor.HomeInteractor
+import co.tiagoaguiar.evernotekt.data.NoteInteractorImpl
+import co.tiagoaguiar.evernotekt.data.model.NoteState
 import co.tiagoaguiar.evernotekt.presenter.HomePresenter
+import co.tiagoaguiar.evernotekt.view.IHomeView
 import co.tiagoaguiar.evernotekt.view.adapters.NoteAdapter
 import com.google.android.material.navigation.NavigationView
+import io.reactivex.Observable
 import kotlinx.android.synthetic.main.activity_home.*
 import kotlinx.android.synthetic.main.app_bar_home.*
 import kotlinx.android.synthetic.main.content_home.*
-import ru.terrakok.cicerone.Navigator
-import ru.terrakok.cicerone.Router
-import ru.terrakok.cicerone.commands.Forward
 
-class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener,
-    IHome.View {
+class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener, IHomeView {
 
-    private val navigator: Navigator? by lazy {
-        Navigator { command ->
-            if (command is Forward) {
-                when (command.screenKey) {
-                    FormActivity.TAG -> startActivity(
-                        Intent(
-                            this@HomeActivity,
-                            FormActivity::class.java
-                        )
-                    )
-                }
-            }
-        }
-    }
-
-    private lateinit var presenter: IHome.Presenter
-
-    private val router: Router? by lazy {
-        App.INSTANCE.cicerone.router
-    }
+    private lateinit var presenter: HomePresenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-        presenter = HomePresenter(this, HomeInteractor(), router)
+        presenter = HomePresenter(NoteInteractorImpl())
+        presenter.bind(this)
 
         setupViews()
     }
 
-    override fun onResume() {
-        super.onResume()
-        App.INSTANCE.cicerone.navigatorHolder.setNavigator(navigator)
-        presenter.onStart()
+    override fun render(state: NoteState) {
+        when(state) {
+            is NoteState.LoadingState -> renderLoadingState()
+            is NoteState.DataState -> renderDataState(state)
+            is NoteState.ErrorState -> renderErrorState(state)
+        }
     }
 
-    override fun onPause() {
-        super.onPause()
-        App.INSTANCE.cicerone.navigatorHolder.removeNavigator()
+    private fun renderLoadingState() {
+        home_recycler_view.isEnabled = false
+        showToast("start loading")
     }
 
-    override fun onStart() {
-        super.onStart()
-        presenter.onStart()
-    }
-
-    override fun displayError(message: String) {
-        showToast(message)
-    }
-
-    override fun displayNotes(notes: List<Note>) {
-        // progress
+    private fun renderDataState(state: NoteState.DataState) {
+        val notes = state.data
         if (notes.isNotEmpty()) {
             home_recycler_view.adapter =
                 NoteAdapter(notes) { note ->
@@ -95,6 +66,12 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             // no data
         }
     }
+
+    private fun renderErrorState(state: NoteState.ErrorState) {
+        showToast(state.data)
+    }
+
+    override fun displayNotesIntent(): Observable<Unit> = Observable.just(Unit)
 
     override fun onBackPressed() {
         if (drawer_layout.isDrawerOpen(GravityCompat.START)) {
@@ -152,7 +129,12 @@ class HomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
     fun goToAddActivity(view: View) {
-        presenter.addNoteClick()
+        startActivity(Intent(this, FormActivity::class.java))
+    }
+
+    override fun onStop() {
+        super.onStop()
+        presenter.unbind()
     }
 
 }
